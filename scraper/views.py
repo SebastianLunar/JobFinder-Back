@@ -5,6 +5,8 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from dotenv import load_dotenv
@@ -52,7 +54,23 @@ def scrape_linkedin(request):
         seconds = HOURS_TO_SECONDS[time_filter]
         filters += f"&f_TPR=r{seconds}"
 
-    driver = webdriver.Chrome()
+    # --- INICIALIZACIÓN DEL WEBDRIVER PARA RAILWAY ---
+    
+    # 1. Configurar Opciones de Chrome Headless
+    chrome_options = Options()
+    chrome_options.add_argument("--headless") # Ejecución sin interfaz gráfica (esencial para la nube)
+    chrome_options.add_argument("--no-sandbox") # Necesario para contenedores de Linux (como Railway)
+    chrome_options.add_argument("--disable-dev-shm-usage") # Optimiza el uso de memoria en contenedores
+    
+    try:
+        driver = webdriver.Chrome(options=chrome_options) 
+    except Exception as e:
+        return JsonResponse({"error": f"Error al inicializar WebDriver: {e}. Conflicto de Driver/Navegador."}, status=500)
+        
+    # ----------------------------------------------------
+
+
+    # driver = webdriver.Chrome()
     driver.get("https://www.linkedin.com/login")
 
     # --- LOGIN ---
