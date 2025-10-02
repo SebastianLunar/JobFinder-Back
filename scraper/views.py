@@ -81,8 +81,13 @@ def scrape_linkedin(request):
 
     try:
         # driver = webdriver.Chrome(ChromeDriverManager().install()) 
-        service = ChromeService(ChromeDriverManager().install()) # ¡Esto maneja la ruta automáticamente!
-        driver = webdriver.Chrome(service=service, options=chrome_options) 
+        # service = ChromeService(ChromeDriverManager().install()) # ¡Esto maneja la ruta automáticamente!
+        # driver = webdriver.Chrome(service=service, options=chrome_options) 
+
+        driver = webdriver.Chrome(
+            executable_path=ChromeDriverManager().install(), 
+            options=chrome_options
+        )
     except Exception as e:
         # Esto nos ayudará a diagnosticar si falla la ruta del driver o del navegador
         return JsonResponse({
