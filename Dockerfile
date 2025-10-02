@@ -30,7 +30,10 @@ RUN apt-get update && apt-get install -y google-chrome-stable \
 # 3. Configurar el entorno (Render por defecto)
 ENV PYTHONUNBUFFERED 1
 # 🚨 Establece la variable que tu código usa para el binario de Google Chrome
-ENV CHROME_BIN /usr/bin/google-chrome
+ENV CHROME_BIN /usr/bin/google-chrome-stable
+
+# Alias para mayor compatibilidad
+RUN ln -s /usr/bin/google-chrome-stable /usr/bin/google-chrome
 
 # 4. Copiar código e instalar dependencias de Python
 WORKDIR /app
