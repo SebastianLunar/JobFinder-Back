@@ -1,5 +1,5 @@
 # Usa la imagen base que ya tienes
-FROM python:3.11-slim-bullseye
+FROM python:3.11-bullseye
 
 # 1. Instalar dependencias de sistema y clave GPG para Google Chrome
 RUN apt-get update && apt-get install -y \
