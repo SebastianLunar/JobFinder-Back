@@ -4,6 +4,7 @@ import os
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from selenium import webdriver
+from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
@@ -70,7 +71,7 @@ def scrape_linkedin(request):
         # Intentamos inicializar el driver con las opciones. 
         # Ahora el ejecutable 'chromedriver' debería estar disponible en el entorno
         # gracias a la inclusión en 'nixpacks.toml'.
-        driver = webdriver.Chrome(options=chrome_options) 
+        driver = webdriver.Chrome(ChromeDriverManager().install()) 
     except Exception as e:
         # Esto nos ayudará a diagnosticar si falla la ruta del driver o del navegador
         return JsonResponse({
