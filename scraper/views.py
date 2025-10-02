@@ -7,7 +7,7 @@ from selenium import webdriver
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from dotenv import load_dotenv
@@ -59,19 +59,30 @@ def scrape_linkedin(request):
     
     # 1. Configurar Opciones de Chrome Headless
     chrome_options = Options()
-    chrome_options.add_argument("--headless") # Ejecución sin interfaz gráfica (esencial para la nube)
-    chrome_options.add_argument("--no-sandbox") # Necesario para contenedores de Linux (como Railway)
-    chrome_options.add_argument("--disable-dev-shm-usage") # Optimiza el uso de memoria en contenedores
-    
+    # 1. Modo Headless (sin GUI)
+    chrome_options.add_argument("--headless") 
+
+    # 2. Deshabilitar el sandbox de seguridad (esencial para contenedores de Linux)
+    chrome_options.add_argument("--no-sandbox") 
+
+    # 3. Solución para problemas de memoria compartida en contenedores
+    chrome_options.add_argument("--disable-dev-shm-usage") 
+
+    # 4. Deshabilitar la extensión / modo que requiere GUI
+    chrome_options.add_argument("--disable-gpu") 
+
+    # 5. Agregar más opciones para aumentar la compatibilidad del entorno (opcional, pero seguro)
+    chrome_options.add_argument("--disable-setuid-sandbox")
+    chrome_options.add_argument("--disable-extensions") 
+
     CHROME_BIN = os.environ.get("CHROME_BIN", None)
     if CHROME_BIN:
         chrome_options.binary_location = CHROME_BIN
 
     try:
-        # Intentamos inicializar el driver con las opciones. 
-        # Ahora el ejecutable 'chromedriver' debería estar disponible en el entorno
-        # gracias a la inclusión en 'nixpacks.toml'.
-        driver = webdriver.Chrome(ChromeDriverManager().install()) 
+        # driver = webdriver.Chrome(ChromeDriverManager().install()) 
+        service = ChromeService(ChromeDriverManager().install()) # ¡Esto maneja la ruta automáticamente!
+        driver = webdriver.Chrome(service=service, options=chrome_options) 
     except Exception as e:
         # Esto nos ayudará a diagnosticar si falla la ruta del driver o del navegador
         return JsonResponse({
