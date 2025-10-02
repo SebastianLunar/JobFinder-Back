@@ -1,8 +1,7 @@
-# Usa una imagen base de Python que sea compatible con Debian/Ubuntu
-# Usamos Bullseye para compatibilidad con las últimas librerías
+# Usa una imagen base de Python (la que elegiste)
 FROM python:3.11-slim-bullseye
 
-# 1. Instalar dependencias de sistema necesarias para Chrome
+# 1. Instalar dependencias de sistema necesarias para Chrome/Chromium
 RUN apt-get update && apt-get install -y \
     wget \
     gnupg \
@@ -16,16 +15,21 @@ RUN apt-get update && apt-get install -y \
     libxdamage1 \
     libxfixes3 \
     libxrandr2 \
-    libgbm-dev
+    libgbm-dev \
+    # 🚨 Instalar Chromium y sus dependencias (puede llamarse 'chromium' o 'chromium-browser')
+    chromium \
+    # Limpiar el cache para reducir el tamaño de la imagen
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-# 2. Instalar Chromium
-# La ruta de este binario es /usr/bin/chromium.
-# Esto es más seguro que instalar 'google-chrome' en contenedores.
-RUN apt-get install -y chromium
+# 2. Crear Enlace Simbólico (Symlink)
+# Esto es crucial: asegura que el binario se llame 'chromium' y esté en /usr/bin.
+RUN ln -s /usr/bin/chromium-browser /usr/bin/chromium
 
-# 3. Configurar el entorno (Render por defecto)
+# 3. Configurar el entorno
 ENV PYTHONUNBUFFERED 1
-ENV CHROME_BIN /usr/bin/chromium  # <-- ¡ESTO ES CRUCIAL!
+# 🚨 Establece la variable que tu código usa para el binario
+ENV CHROME_BIN /usr/bin/chromium
 
 # 4. Copiar código e instalar dependencias de Python
 WORKDIR /app
