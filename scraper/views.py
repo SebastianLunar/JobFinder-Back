@@ -68,10 +68,15 @@ def scrape_linkedin(request):
         chrome_options.binary_location = CHROME_BIN
 
     try:
-        service = Service(ChromeDriverManager().install())
+        # service = Service(ChromeDriverManager().install())
+        # # 2. Inicializamos el driver con el objeto Service Y las Opciones.
+        # driver = webdriver.Chrome(service=service, options=chrome_options) 
         
-        # 2. Inicializamos el driver con el objeto Service Y las Opciones.
-        driver = webdriver.Chrome(service=service, options=chrome_options) 
+        driver_path = ChromeDriverManager().install()
+    
+        # 2. Inicializamos el driver usando la sintaxis antigua: 'executable_path'
+        #    Asegúrate de pasar también 'options' para que se aplique la ruta del binario de Chrome (CHROME_BIN)
+        driver = webdriver.Chrome(executable_path=driver_path, options=chrome_options)
     except Exception as e:
         # Esto nos ayudará a diagnosticar si falla la ruta del driver o del navegador
         return JsonResponse({
