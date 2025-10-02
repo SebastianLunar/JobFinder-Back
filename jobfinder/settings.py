@@ -27,7 +27,8 @@ DEBUG = True
 
 import os
 
-ALLOWED_HOSTS = ["*", os.getenv("RAILWAY_STATIC_URL", "")]
+# ALLOWED_HOSTS = ["*", os.getenv("RAILWAY_STATIC_URL", "")]
+ALLOWED_HOSTS = ['jobfinder-back-production.up.railway.app']
 
 
 # Application definition
