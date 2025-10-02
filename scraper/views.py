@@ -62,10 +62,20 @@ def scrape_linkedin(request):
     chrome_options.add_argument("--no-sandbox") # Necesario para contenedores de Linux (como Railway)
     chrome_options.add_argument("--disable-dev-shm-usage") # Optimiza el uso de memoria en contenedores
     
+    CHROME_BIN = os.environ.get("CHROME_BIN", None)
+    if CHROME_BIN:
+        chrome_options.binary_location = CHROME_BIN
+
     try:
+        # Intentamos inicializar el driver con las opciones. 
+        # Ahora el ejecutable 'chromedriver' debería estar disponible en el entorno
+        # gracias a la inclusión en 'nixpacks.toml'.
         driver = webdriver.Chrome(options=chrome_options) 
     except Exception as e:
-        return JsonResponse({"error": f"Error al inicializar WebDriver: {e}. Conflicto de Driver/Navegador."}, status=500)
+        # Esto nos ayudará a diagnosticar si falla la ruta del driver o del navegador
+        return JsonResponse({
+            "error": f"Error fatal al inicializar Chrome. ¡Verifica 'nixpacks.toml'! Detalle: {e}"
+        }, status=500)
         
     # ----------------------------------------------------
 
