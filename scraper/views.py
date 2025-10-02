@@ -63,7 +63,7 @@ def scrape_linkedin(request):
     # chrome_options.add_argument("--no-sandbox") # Necesario para contenedores de Linux (como Railway)
     # chrome_options.add_argument("--disable-dev-shm-usage") # Optimiza el uso de memoria en contenedores
     
-    CHROME_BIN = os.environ.get("CHROME_BIN", None)
+    CHROME_BIN = os.environ.get("CHROME_BIN", "/usr/bin/google-chrome")
     if CHROME_BIN:
         chrome_options.binary_location = CHROME_BIN
 
