@@ -25,7 +25,9 @@ SECRET_KEY = 'django-insecure-#d(*v&@(vtta4qy*79pogu*#apwx!zdakq$_!z7%6i0jrk^hfm
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+import os
+
+ALLOWED_HOSTS = ["*", os.getenv("RAILWAY_STATIC_URL", "")]
 
 
 # Application definition
