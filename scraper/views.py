@@ -157,13 +157,10 @@ def scrape_linkedin(request):
     driver.find_element(By.ID, "password").send_keys(password)
     driver.find_element(By.CSS_SELECTOR, "button[type='submit']").click()
 
-    # Esperar a que cargue la navegación post-login o al menos la barra de búsqueda
+    # Esperar a que cargue la navegación post-login o al menos la barra de búsqueda (compat. Selenium 3)
     try:
         WebDriverWait(driver, 60).until(
-            EC.any_of(
-                EC.presence_of_element_located((By.ID, "global-nav-search")),
-                EC.url_contains("/feed/")
-            )
+            lambda d: (d.find_elements(By.ID, "global-nav-search") or ("/feed/" in d.current_url))
         )
     except Exception as e:
         # Puede haber desafíos/captcha; devolvemos diagnóstico
@@ -172,7 +169,12 @@ def scrape_linkedin(request):
             shutil.rmtree(user_data_dir, ignore_errors=True)
         except Exception:
             pass
-        return JsonResponse({"error": f"Timeout post-login, posible bloqueo/captcha: {e}"}, status=504)
+        # Agregar contexto útil para diagnosticar
+        return JsonResponse({
+            "error": f"Timeout post-login, posible bloqueo/captcha: {e}",
+            "current_url": getattr(driver, "current_url", None),
+            "title": None  # no podemos leer title si driver ya fue quit
+        }, status=504)
 
     # --- BÚSQUEDA ---
     url = f"https://www.linkedin.com/jobs/search/?keywords={keyword}&location={location}{filters}"
