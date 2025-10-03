@@ -44,5 +44,5 @@ COPY requirements.txt /app/
 RUN pip install --no-cache-dir -r requirements.txt
 COPY . /app/
 
-# 5. Comando de inicio (Ajusta esto a tu comando de Render/Gunicorn)
-CMD ["gunicorn", "jobfinder.wsgi:application", "--bind", "0.0.0.0:$PORT"]
+# 5. Comando de inicio (usar shell para expandir $PORT de Render)
+CMD sh -c 'gunicorn jobfinder.wsgi:application --bind 0.0.0.0:${PORT:-3000}'
