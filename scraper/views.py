@@ -61,7 +61,7 @@ def scrape_linkedin(request):
     
     # 1. Configurar Opciones de Chrome Headless (necesarias en Render/Docker)
     chrome_options = Options()
-    chrome_options.add_argument("--headless")  # ejecución sin UI en servidor
+    chrome_options.add_argument("--headless=new")  # ejecución sin UI en servidor (modo moderno)
     chrome_options.add_argument("--no-sandbox")  # necesario en contenedores
     chrome_options.add_argument("--disable-dev-shm-usage")  # evita /dev/shm pequeño
     chrome_options.add_argument("--disable-gpu")  # seguro en headless
@@ -69,6 +69,24 @@ def scrape_linkedin(request):
     chrome_options.add_argument("--incognito")
     chrome_options.add_argument("--no-first-run")
     chrome_options.add_argument("--no-default-browser-check")
+    chrome_options.add_argument("--disable-blink-features=AutomationControlled")
+    chrome_options.add_argument("--disable-extensions")
+    chrome_options.add_argument("--disable-infobars")
+    # User-Agent fijo tipo Chrome estable en Linux
+    chrome_options.add_argument("--user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+    # Reducir bloqueos por detección de automatización (compat. Selenium 3)
+    try:
+        chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
+        chrome_options.add_experimental_option("useAutomationExtension", False)
+        chrome_prefs = {"profile.managed_default_content_settings.images": 2}
+        chrome_options.add_experimental_option("prefs", chrome_prefs)
+    except Exception:
+        pass
+    # Estrategia de carga más rápida
+    try:
+        chrome_options.page_load_strategy = 'eager'
+    except Exception:
+        pass
 
     # Usar SIEMPRE un directorio de datos único por request para evitar bloqueos
     user_data_dir = tempfile.mkdtemp(prefix="chrome-user-data-")
@@ -121,19 +139,51 @@ def scrape_linkedin(request):
 
 
     # --- LOGIN ---
+    driver.set_page_load_timeout(90)
     driver.get("https://www.linkedin.com/login")
+    # Esperar campos de login
+    try:
+        WebDriverWait(driver, 60).until(EC.presence_of_element_located((By.ID, "username")))
+        WebDriverWait(driver, 60).until(EC.presence_of_element_located((By.ID, "password")))
+    except Exception as e:
+        driver.quit()
+        try:
+            shutil.rmtree(user_data_dir, ignore_errors=True)
+        except Exception:
+            pass
+        return JsonResponse({"error": f"Timeout esperando formulario de login: {e}"}, status=504)
+
     driver.find_element(By.ID, "username").send_keys(email)
     driver.find_element(By.ID, "password").send_keys(password)
     driver.find_element(By.CSS_SELECTOR, "button[type='submit']").click()
 
-    WebDriverWait(driver, 10).until(
-        EC.presence_of_element_located((By.ID, "global-nav-search"))
-    )
+    # Esperar a que cargue la navegación post-login o al menos la barra de búsqueda
+    try:
+        WebDriverWait(driver, 60).until(
+            EC.any_of(
+                EC.presence_of_element_located((By.ID, "global-nav-search")),
+                EC.url_contains("/feed/")
+            )
+        )
+    except Exception as e:
+        # Puede haber desafíos/captcha; devolvemos diagnóstico
+        driver.quit()
+        try:
+            shutil.rmtree(user_data_dir, ignore_errors=True)
+        except Exception:
+            pass
+        return JsonResponse({"error": f"Timeout post-login, posible bloqueo/captcha: {e}"}, status=504)
 
     # --- BÚSQUEDA ---
     url = f"https://www.linkedin.com/jobs/search/?keywords={keyword}&location={location}{filters}"
     driver.get(url)
-    time.sleep(3)
+    # Espera a que aparezca la lista de empleos (mejor que sleep fijo)
+    try:
+        WebDriverWait(driver, 30).until(
+            EC.presence_of_all_elements_located((By.CLASS_NAME, "job-card-container"))
+        )
+    except Exception:
+        pass
     
     try:
         no_results_banner = driver.find_element(By.CLASS_NAME, "jobs-search-no-results-banner")
