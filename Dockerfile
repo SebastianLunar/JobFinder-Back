@@ -48,5 +48,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . /app/
 
 # 5. Comando de inicio (lanzar Xvfb y luego Gunicorn)
-CMD sh -c 'Xvfb :99 -screen 0 1920x1080x24 & \ 
-  gunicorn jobfinder.wsgi:application --bind 0.0.0.0:${PORT:-3000} --workers ${WEB_CONCURRENCY:-1} --timeout ${WEB_TIMEOUT:-180}'
+CMD sh -c 'Xvfb :99 -screen 0 1920x1080x24 & gunicorn jobfinder.wsgi:application --bind 0.0.0.0:${PORT:-3000} --workers ${WEB_CONCURRENCY:-1} --timeout ${WEB_TIMEOUT:-180}'
