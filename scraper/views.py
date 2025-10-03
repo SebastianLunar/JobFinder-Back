@@ -58,12 +58,12 @@ def scrape_linkedin(request):
     
     # 1. Configurar Opciones de Chrome Headless (necesarias en Render/Docker)
     chrome_options = Options()
-    chrome_options.add_argument("--headless")  # ejecución sin UI
-    chrome_options.add_argument("--no-sandbox")  # necesario en contenedores
-    chrome_options.add_argument("--disable-dev-shm-usage")  # evita /dev/shm pequeño
-    chrome_options.add_argument("--disable-gpu")  # seguro en headless
-    chrome_options.add_argument("--window-size=1920,1080")
-    chrome_options.add_argument("--remote-debugging-port=9222")
+    # chrome_options.add_argument("--headless")  # ejecución sin UI
+    # chrome_options.add_argument("--no-sandbox")  # necesario en contenedores
+    # chrome_options.add_argument("--disable-dev-shm-usage")  # evita /dev/shm pequeño
+    # chrome_options.add_argument("--disable-gpu")  # seguro en headless
+    # chrome_options.add_argument("--window-size=1920,1080")
+    # chrome_options.add_argument("--remote-debugging-port=9222")
 
     # 2. Detectar binario de Chrome/Chromium (validando ruta)
     checked_candidates = []
