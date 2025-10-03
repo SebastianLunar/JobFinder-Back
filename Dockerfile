@@ -6,6 +6,7 @@ RUN apt-get update && apt-get install -y \
     wget \
     curl \
     unzip \
+    xvfb \
     fonts-liberation \
     xdg-utils \
     libnss3 \
@@ -35,6 +36,8 @@ RUN set -eux; \
 ENV PYTHONUNBUFFERED 1
 # Establecer variable usada por la app para el binario de Chrome
 ENV CHROME_BIN=/usr/bin/google-chrome-stable
+# Configurar DISPLAY para Xvfb (modo no-headless)
+ENV DISPLAY=:99
 # Alias para mayor compatibilidad
 RUN ln -sf /usr/bin/google-chrome-stable /usr/bin/google-chrome
 
@@ -44,5 +47,6 @@ COPY requirements.txt /app/
 RUN pip install --no-cache-dir -r requirements.txt
 COPY . /app/
 
-# 5. Comando de inicio (usar shell para expandir $PORT de Render)
-CMD sh -c 'gunicorn jobfinder.wsgi:application --bind 0.0.0.0:${PORT:-3000} --workers ${WEB_CONCURRENCY:-1} --timeout ${WEB_TIMEOUT:-180}'
+# 5. Comando de inicio (lanzar Xvfb y luego Gunicorn)
+CMD sh -c 'Xvfb :99 -screen 0 1920x1080x24 & \ 
+  gunicorn jobfinder.wsgi:application --bind 0.0.0.0:${PORT:-3000} --workers ${WEB_CONCURRENCY:-1} --timeout ${WEB_TIMEOUT:-180}'

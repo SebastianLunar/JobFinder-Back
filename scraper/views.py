@@ -61,7 +61,7 @@ def scrape_linkedin(request):
     
     # 1. Configurar Opciones de Chrome Headless (necesarias en Render/Docker)
     chrome_options = Options()
-    chrome_options.add_argument("--headless=new")  # ejecución sin UI en servidor (modo moderno)
+    # chrome_options.add_argument("--headless=new")  # ejecución sin UI en servidor (modo moderno)
     chrome_options.add_argument("--no-sandbox")  # necesario en contenedores
     chrome_options.add_argument("--disable-dev-shm-usage")  # evita /dev/shm pequeño
     chrome_options.add_argument("--disable-gpu")  # seguro en headless
