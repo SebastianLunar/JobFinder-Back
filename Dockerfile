@@ -45,4 +45,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . /app/
 
 # 5. Comando de inicio (usar shell para expandir $PORT de Render)
-CMD sh -c 'gunicorn jobfinder.wsgi:application --bind 0.0.0.0:${PORT:-3000}'
+CMD sh -c 'gunicorn jobfinder.wsgi:application --bind 0.0.0.0:${PORT:-3000} --workers ${WEB_CONCURRENCY:-1} --timeout ${WEB_TIMEOUT:-180}'
