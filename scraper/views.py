@@ -56,17 +56,22 @@ def scrape_linkedin(request):
 
     # --- INICIALIZACIÓN DEL WEBDRIVER PARA RAILWAY ---
     
-    # 1. Configurar Opciones de Chrome Headless (necesarias en Render/Nixpacks/Docker)
+    # 1. Configurar Opciones de Chrome Headless (necesarias en Render/Docker)
     chrome_options = Options()
-    # chrome_options.add_argument("--headless")  # ejecución sin UI
-    # chrome_options.add_argument("--no-sandbox")  # necesario en contenedores
-    # chrome_options.add_argument("--disable-dev-shm-usage")  # evita /dev/shm pequeño
-    # chrome_options.add_argument("--disable-gpu")  # seguro en headless
-    # chrome_options.add_argument("--window-size=1920,1080")
-    # chrome_options.add_argument("--remote-debugging-port=9222")
+    chrome_options.add_argument("--headless")  # ejecución sin UI
+    chrome_options.add_argument("--no-sandbox")  # necesario en contenedores
+    chrome_options.add_argument("--disable-dev-shm-usage")  # evita /dev/shm pequeño
+    chrome_options.add_argument("--disable-gpu")  # seguro en headless
+    chrome_options.add_argument("--window-size=1920,1080")
+    chrome_options.add_argument("--remote-debugging-port=9222")
 
-    # 2. Detectar binario de Chrome/Chromium
+    # 2. Detectar binario de Chrome/Chromium (validando ruta)
+    checked_candidates = []
     CHROME_BIN = os.environ.get("CHROME_BIN")
+    # si viene desde env pero no existe, ignorarlo
+    if CHROME_BIN and not os.path.exists(CHROME_BIN):
+        checked_candidates.append((CHROME_BIN, False))
+        CHROME_BIN = None
     if not CHROME_BIN:
         for candidate in [
             "/usr/bin/google-chrome-stable",
@@ -74,7 +79,9 @@ def scrape_linkedin(request):
             "/usr/bin/chromium",
             "/usr/bin/chromium-browser",
         ]:
-            if os.path.exists(candidate):
+            exists = os.path.exists(candidate)
+            checked_candidates.append((candidate, exists))
+            if exists:
                 CHROME_BIN = candidate
                 break
     if CHROME_BIN:
@@ -98,6 +105,7 @@ def scrape_linkedin(request):
             "error": f"Error al inicializar Chrome: {e}",
             "chrome_bin": CHROME_BIN,
             "chromedriver_path": os.environ.get("CHROMEDRIVER_PATH"),
+            "checked_candidates": checked_candidates,
         }, status=500)
 
 
