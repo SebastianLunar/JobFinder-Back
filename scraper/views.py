@@ -1,6 +1,8 @@
 import json
 import time
 import os
+import tempfile
+import shutil
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from selenium import webdriver
@@ -64,6 +66,12 @@ def scrape_linkedin(request):
     # chrome_options.add_argument("--disable-gpu")  # seguro en headless
     # chrome_options.add_argument("--window-size=1920,1080")
     # chrome_options.add_argument("--remote-debugging-port=9222")
+    # chrome_options.add_argument("--no-first-run")
+    # chrome_options.add_argument("--no-default-browser-check")
+
+    # Usar un directorio de datos único por request para evitar 'already in use'
+    user_data_dir = tempfile.mkdtemp(prefix="chrome-user-data-")
+    chrome_options.add_argument(f"--user-data-dir={user_data_dir}")
 
     # 2. Detectar binario de Chrome/Chromium (validando ruta)
     checked_candidates = []
@@ -101,6 +109,11 @@ def scrape_linkedin(request):
                 driver_path = ChromeDriverManager().install()
                 driver = webdriver.Chrome(executable_path=driver_path, options=chrome_options)
     except Exception as e:
+        # limpiar perfil temporal si falla
+        try:
+            shutil.rmtree(user_data_dir, ignore_errors=True)
+        except Exception:
+            pass
         return JsonResponse({
             "error": f"Error al inicializar Chrome: {e}",
             "chrome_bin": CHROME_BIN,
@@ -128,6 +141,10 @@ def scrape_linkedin(request):
         no_results_banner = driver.find_element(By.CLASS_NAME, "jobs-search-no-results-banner")
         if no_results_banner.is_displayed():
             driver.quit()
+            try:
+                shutil.rmtree(user_data_dir, ignore_errors=True)
+            except Exception:
+                pass
             return JsonResponse({
                 "results": [],
                 "message": "No se encontraron resultados para la búsqueda."
