@@ -50,46 +50,59 @@ def scrape_linkedin(request):
         modality_map = {"remoto": "2", "hibrido": "3", "presencial": "1"}
         if modality in modality_map:
             filters += f"&f_WT={modality_map[modality]}"
-
     if time_filter in HOURS_TO_SECONDS:
         seconds = HOURS_TO_SECONDS[time_filter]
         filters += f"&f_TPR=r{seconds}"
 
     # --- INICIALIZACIÓN DEL WEBDRIVER PARA RAILWAY ---
     
-    # 1. Configurar Opciones de Chrome Headless
+    # 1. Configurar Opciones de Chrome Headless (necesarias en Render/Nixpacks/Docker)
     chrome_options = Options()
-    # chrome_options.add_argument("--headless") # Ejecución sin interfaz gráfica (esencial para la nube)
-    # chrome_options.add_argument("--no-sandbox") # Necesario para contenedores de Linux (como Railway)
-    # chrome_options.add_argument("--disable-dev-shm-usage") # Optimiza el uso de memoria en contenedores
-    
-    CHROME_BIN = os.environ.get("CHROME_BIN", "/usr/bin/google-chrome")
+    # chrome_options.add_argument("--headless")  # ejecución sin UI
+    # chrome_options.add_argument("--no-sandbox")  # necesario en contenedores
+    # chrome_options.add_argument("--disable-dev-shm-usage")  # evita /dev/shm pequeño
+    # chrome_options.add_argument("--disable-gpu")  # seguro en headless
+    # chrome_options.add_argument("--window-size=1920,1080")
+    # chrome_options.add_argument("--remote-debugging-port=9222")
+
+    # 2. Detectar binario de Chrome/Chromium
+    CHROME_BIN = os.environ.get("CHROME_BIN")
+    if not CHROME_BIN:
+        for candidate in [
+            "/usr/bin/google-chrome-stable",
+            "/usr/bin/google-chrome",
+            "/usr/bin/chromium",
+            "/usr/bin/chromium-browser",
+        ]:
+            if os.path.exists(candidate):
+                CHROME_BIN = candidate
+                break
     if CHROME_BIN:
         chrome_options.binary_location = CHROME_BIN
 
+    # 3. Inicializar el driver (probar chromedriver del sistema, luego PATH, luego webdriver_manager)
     try:
-        # service = Service(ChromeDriverManager().install())
-        # # 2. Inicializamos el driver con el objeto Service Y las Opciones.
-        # driver = webdriver.Chrome(service=service, options=chrome_options) 
-        
-        driver_path = ChromeDriverManager().install()
-    
-        # 2. Inicializamos el driver usando la sintaxis antigua: 'executable_path'
-        #    Asegúrate de pasar también 'options' para que se aplique la ruta del binario de Chrome (CHROME_BIN)
-        driver = webdriver.Chrome(executable_path=driver_path, options=chrome_options)
+        chromedriver_path = os.environ.get("CHROMEDRIVER_PATH")
+        if chromedriver_path and os.path.exists(chromedriver_path):
+            driver = webdriver.Chrome(executable_path=chromedriver_path, options=chrome_options)
+        else:
+            try:
+                # Intentar con chromedriver en PATH
+                driver = webdriver.Chrome(options=chrome_options)
+            except Exception:
+                # Último recurso: webdriver_manager (requiere red saliente)
+                driver_path = ChromeDriverManager().install()
+                driver = webdriver.Chrome(executable_path=driver_path, options=chrome_options)
     except Exception as e:
-        # Esto nos ayudará a diagnosticar si falla la ruta del driver o del navegador
         return JsonResponse({
-            "error": f"Error al inicializar Chrome. {e}"
+            "error": f"Error al inicializar Chrome: {e}",
+            "chrome_bin": CHROME_BIN,
+            "chromedriver_path": os.environ.get("CHROMEDRIVER_PATH"),
         }, status=500)
-        
-    # ----------------------------------------------------
 
-
-    # driver = webdriver.Chrome()
-    driver.get("https://www.linkedin.com/login")
 
     # --- LOGIN ---
+    driver.get("https://www.linkedin.com/login")
     driver.find_element(By.ID, "username").send_keys(email)
     driver.find_element(By.ID, "password").send_keys(password)
     driver.find_element(By.CSS_SELECTOR, "button[type='submit']").click()
