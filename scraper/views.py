@@ -65,9 +65,9 @@ def scrape_linkedin(request):
     # chrome_options.add_argument("--disable-dev-shm-usage")  # evita /dev/shm pequeño
     # chrome_options.add_argument("--disable-gpu")  # seguro en headless
     # chrome_options.add_argument("--window-size=1920,1080")
-    # chrome_options.add_argument("--remote-debugging-port=9222")
-    # chrome_options.add_argument("--no-first-run")
-    # chrome_options.add_argument("--no-default-browser-check")
+    chrome_options.add_argument("--remote-debugging-port=9222")
+    chrome_options.add_argument("--no-first-run")
+    chrome_options.add_argument("--no-default-browser-check")
 
     # Usar un directorio de datos único por request para evitar 'already in use'
     user_data_dir = tempfile.mkdtemp(prefix="chrome-user-data-")
